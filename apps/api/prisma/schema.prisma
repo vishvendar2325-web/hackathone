@@ -1,0 +1,732 @@
+// FOCUSFLOW - Prisma Database Schema
+// PostgreSQL Database Architecture
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  STUDENT
+  PARENT
+  COUNSELLOR
+  ADMIN
+}
+
+enum EducationLevel {
+  SCHOOL
+  COLLEGE
+  UNIVERSITY
+  SELF_STUDY
+}
+
+enum DeviceType {
+  CHROME_EXTENSION
+  DESKTOP_WEB
+  MOBILE_ANDROID
+  MOBILE_PWA
+}
+
+enum FocusMode {
+  POMODORO
+  DEEP_WORK
+  EXAM_PREP
+  QUICK_SPRINT
+}
+
+enum FocusStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ABANDONED
+}
+
+enum ShortFormPlatform {
+  INSTAGRAM_REELS
+  YOUTUBE_SHORTS
+  FACEBOOK_REELS
+  SNAPCHAT_SPOTLIGHT
+  TIKTOK
+}
+
+enum WebsiteCategoryType {
+  PRODUCTIVE
+  DISTRACTING
+  NEUTRAL
+  CUSTOM
+}
+
+enum RecommendationCategory {
+  FOCUS_IMPROVEMENT
+  SCREEN_TIME_REDUCTION
+  REELS_REDUCTION
+  STUDY_PLANNING
+  WEBSITE_DISTRACTION_CONTROL
+  CONSISTENCY_IMPROVEMENT
+  BREAK_REMINDER
+  GOAL_COMPLETION
+}
+
+enum RecommendationSeverity {
+  INFO
+  MODERATE
+  HIGH
+  CRITICAL
+}
+
+enum XPSource {
+  FOCUS_SESSION_COMPLETED
+  REEL_LIMIT_RESPECTED
+  DAILY_STREAK
+  CHALLENGE_WON
+  STUDY_GROUP_SESSION
+  GOAL_COMPLETED
+}
+
+enum BadgeRarity {
+  COMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+enum GroupRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum ChallengeDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+// ==========================================
+// 1. USER MANAGEMENT
+// ==========================================
+
+model User {
+  id             String          @id @default(uuid())
+  email          String          @unique
+  passwordHash   String
+  name           String
+  role           UserRole        @default(STUDENT)
+  currentXP      Int             @default(0)
+  level          Int             @default(1)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  profile             Profile?
+  privacyConsent      PrivacyConsent?
+  refreshTokens       RefreshToken[]
+  devices             Device[]
+  usageSessions       UsageSession[]
+  dailySummaries      DailySummary[]
+  websiteUsages       WebsiteUsage[]
+  reelEvents          ReelEvent[]
+  reelDailyStats      ReelDailyStat[]
+  reelSessions        ReelSession[]
+  reelLimits          ReelLimit[]
+  reelCorrections     ReelCorrection[]
+  focusSessions       FocusSession[]
+  focusGoals          FocusGoal[]
+  dailyGoalProgresses DailyGoalProgress[]
+  blockedWebsites     BlockedWebsite[]
+  allowedWebsites     AllowedWebsite[]
+  blockingSchedules   BlockingSchedule[]
+  aiRecommendations   AIRecommendation[]
+  aiConversations     AIConversation[]
+  weeklyReports       WeeklyReport[]
+  xpTransactions      XPTransaction[]
+  userAchievements    UserAchievement[]
+  streak              Streak?
+  dailyStreakRecords  DailyStreakRecord[]
+  userChallenges      UserChallenge[]
+  sentFriendRequests  FriendRequest[]     @relation("SentRequests")
+  receivedFriendRequests FriendRequest[]  @relation("ReceivedRequests")
+  friendships         Friend[]            @relation("UserFriends")
+  friendOf            Friend[]            @relation("FriendUsers")
+  groupMemberships    GroupMember[]
+  createdGroups       StudyGroup[]        @relation("CreatedGroups")
+  notifications       Notification[]
+  notificationPref    NotificationPreference?
+  mobileAppUsages     MobileAppUsage[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model Profile {
+  id                      String         @id @default(uuid())
+  userId                  String         @unique
+  user                    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  educationLevel          EducationLevel @default(COLLEGE)
+  institution             String?
+  gradeLevel              String?
+  bio                     String?
+  avatarUrl               String?
+  dailyFocusTargetMinutes Int            @default(120)
+  dailyReelsLimitMinutes  Int            @default(30)
+  timezone                String         @default("UTC")
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+}
+
+model Device {
+  id               String     @id @default(uuid())
+  userId           String
+  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceType       DeviceType @default(CHROME_EXTENSION)
+  browser          String     @default("Chrome")
+  deviceName       String?
+  extensionVersion String?
+  lastSyncAt       DateTime   @default(now())
+  createdAt        DateTime   @default(now())
+
+  @@index([userId])
+}
+
+model PrivacyConsent {
+  id                             String   @id @default(uuid())
+  userId                         String   @unique
+  user                           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hasConsentedTracking           Boolean  @default(false)
+  hasConsentedAnonymousAnalytics Boolean  @default(false)
+  allowParentalViewing           Boolean  @default(false)
+  allowCounsellorViewing         Boolean  @default(false)
+  allowPublicLeaderboard         Boolean  @default(true)
+  consentTimestamp               DateTime @default(now())
+  updatedAt                      DateTime @updatedAt
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  isRevoked Boolean  @default(false)
+
+  @@index([userId])
+}
+
+// ==========================================
+// 2. SCREEN-TIME TRACKING
+// ==========================================
+
+model UsageSession {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceId        String?
+  domain          String   // Clean hostname, zero query params/PII
+  durationSeconds Int
+  startedAt       DateTime
+  endedAt         DateTime
+  isProductive    Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  @@index([userId, startedAt])
+  @@index([domain])
+}
+
+model DailySummary {
+  id                      String   @id @default(uuid())
+  userId                  String
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date                    String   // YYYY-MM-DD
+  totalFocusSeconds       Int      @default(0)
+  totalDistractionSeconds  Int      @default(0)
+  totalBrowserSeconds     Int      @default(0)
+  totalReelsEstimated     Int      @default(0)
+  productivityScore       Int      @default(0) // 0-100
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+model WebsiteUsage {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  domain          String
+  date            String   // YYYY-MM-DD
+  durationSeconds Int      @default(0)
+  category        WebsiteCategoryType @default(NEUTRAL)
+  visitsCount     Int      @default(1)
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, date, domain])
+  @@index([userId, date])
+}
+
+// ==========================================
+// 3. REELS & SHORTS TRACKING (ESTIMATED)
+// ==========================================
+
+model ReelEvent {
+  id             String            @id @default(uuid())
+  userId         String
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform       ShortFormPlatform
+  eventType      String            @default("FEED_TRANSITION")
+  estimated      Boolean           @default(true)
+  confidence     Float             @default(0.85) // Derived from signal heuristics
+  timestamp      DateTime          @default(now())
+  sessionId      String?
+
+  @@index([userId, timestamp])
+  @@index([platform])
+}
+
+model ReelDailyStat {
+  id                     String            @id @default(uuid())
+  userId                 String
+  user                   User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date                   String            // YYYY-MM-DD
+  platform               ShortFormPlatform
+  estimatedCount         Int               @default(0)
+  timeSpentSeconds       Int               @default(0)
+  scrollBurstsCount      Int               @default(0)
+  interventionsShown     Int               @default(0)
+  interventionsRespected Int               @default(0)
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+
+  @@unique([userId, date, platform])
+  @@index([userId, date])
+}
+
+model ReelSession {
+  id               String            @id @default(uuid())
+  userId           String
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform         ShortFormPlatform
+  startedAt        DateTime
+  endedAt          DateTime?
+  estimatedReels   Int               @default(0)
+  durationSeconds  Int               @default(0)
+
+  @@index([userId, startedAt])
+}
+
+model ReelLimit {
+  id              String            @id @default(uuid())
+  userId          String
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform        ShortFormPlatform
+  dailyLimitMinutes Int             @default(30)
+  isEnabled       Boolean           @default(true)
+  updatedAt       DateTime          @updatedAt
+
+  @@unique([userId, platform])
+}
+
+model ReelCorrection {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date           String   // YYYY-MM-DD
+  platform       ShortFormPlatform
+  originalCount  Int
+  correctedCount Int
+  reason         String?
+  createdAt      DateTime @default(now())
+
+  @@index([userId, date])
+}
+
+// ==========================================
+// 4. FOCUS MANAGEMENT
+// ==========================================
+
+model FocusSession {
+  id                    String      @id @default(uuid())
+  userId                String
+  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mode                  FocusMode   @default(POMODORO)
+  targetDurationMinutes Int
+  actualDurationMinutes Int         @default(0)
+  status                FocusStatus @default(ACTIVE)
+  startedAt             DateTime    @default(now())
+  endedAt               DateTime?
+  xpEarned              Int         @default(0)
+  notes                 String?
+  createdAt             DateTime    @default(now())
+
+  @@index([userId, startedAt])
+  @@index([status])
+}
+
+model FocusGoal {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title         String
+  targetMinutes Int
+  targetDate    DateTime
+  isCompleted   Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model DailyGoalProgress {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date          String   // YYYY-MM-DD
+  goalType      String
+  targetValue   Int
+  currentValue  Int      @default(0)
+  isCompleted   Boolean  @default(false)
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, date, goalType])
+  @@index([userId, date])
+}
+
+// ==========================================
+// 5. WEBSITE BLOCKING
+// ==========================================
+
+model BlockedWebsite {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  domain      String
+  category    WebsiteCategoryType @default(DISTRACTING)
+  isEnabled   Boolean  @default(true)
+  strictMode  Boolean  @default(false)
+  redirectUrl String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, domain])
+  @@index([userId])
+}
+
+model AllowedWebsite {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  domain    String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, domain])
+}
+
+model BlockingSchedule {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dayOfWeek  Int      // 0-6 (Sun-Sat)
+  startHour  Int      // 0-23
+  startMin   Int      // 0-59
+  endHour    Int      // 0-23
+  endMin     Int      // 0-59
+  isEnabled  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ==========================================
+// 6. AI FOCUS COACH & INTELLIGENCE
+// ==========================================
+
+model AIRecommendation {
+  id              String                 @id @default(uuid())
+  userId          String
+  user            User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category        RecommendationCategory
+  severity        RecommendationSeverity @default(INFO)
+  title           String
+  description     String
+  suggestedAction String
+  confidence      String                 @default("HIGH") // "LOW" | "MEDIUM" | "HIGH"
+  isApplied       Boolean                @default(false)
+  userFeedback    String?                // "HELPFUL" | "NOT_HELPFUL"
+  createdAt       DateTime               @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model AIConversation {
+  id        String      @id @default(uuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String      @default("Focus Coach Chat")
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  messages  AIMessage[]
+
+  @@index([userId])
+}
+
+model AIMessage {
+  id             String         @id @default(uuid())
+  conversationId String
+  conversation   AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String         // "user" | "assistant" | "system"
+  content        String
+  createdAt      DateTime       @default(now())
+
+  @@index([conversationId])
+}
+
+model WeeklyReport {
+  id                  String   @id @default(uuid())
+  userId              String
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weekStartDate       String   // YYYY-MM-DD
+  weekEndDate         String   // YYYY-MM-DD
+  totalFocusMinutes   Int
+  totalBrowserMinutes Int
+  estimatedReelsTotal Int
+  goalsCompleted      Int
+  productivityTrend   String   // "INCREASING" | "STEADY" | "DECLINING"
+  bestDay             String
+  aiSummary           String
+  actionableGoals     String[]
+  createdAt           DateTime @default(now())
+
+  @@unique([userId, weekStartDate])
+  @@index([userId])
+}
+
+// ==========================================
+// 7. GAMIFICATION & SOCIAL
+// ==========================================
+
+model XPTransaction {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount      Int
+  source      XPSource
+  referenceId String?  // ID of focus session, challenge, etc. to prevent duplicate rewards
+  description String
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([referenceId])
+}
+
+model Achievement {
+  id          String            @id @default(uuid())
+  key         String            @unique
+  title       String
+  description String
+  category    String            // "FOCUS" | "CONSISTENCY" | "WELLBEING" | "SOCIAL"
+  icon        String
+  xpReward    Int               @default(50)
+  rarity      BadgeRarity       @default(COMMON)
+  users       UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(uuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  unlockedAt    DateTime    @default(now())
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+}
+
+model Streak {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentStreakDays Int      @default(0)
+  longestStreakDays Int      @default(0)
+  lastActiveDate    String?  // YYYY-MM-DD
+  updatedAt         DateTime @updatedAt
+}
+
+model DailyStreakRecord {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date           String   // YYYY-MM-DD
+  isCompleted    Boolean  @default(true)
+  focusMinutes   Int      @default(0)
+  reelsEstimated Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+model Challenge {
+  id          String              @id @default(uuid())
+  title       String
+  description String
+  type        String              // "DAILY" | "WEEKLY"
+  difficulty  ChallengeDifficulty @default(MEDIUM)
+  targetType  String              // "FOCUS_TIME" | "REELS_REDUCTION" | "STREAK"
+  targetValue Int
+  xpReward    Int
+  startDate   DateTime
+  endDate     DateTime
+  users       UserChallenge[]
+}
+
+model UserChallenge {
+  id           String    @id @default(uuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challengeId  String
+  challenge    Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  progress     Int       @default(0)
+  isCompleted  Boolean   @default(false)
+  completedAt  DateTime?
+
+  @@unique([userId, challengeId])
+  @@index([userId])
+}
+
+model FriendRequest {
+  id         String   @id @default(uuid())
+  senderId   String
+  sender     User     @relation("SentRequests", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId String
+  receiver   User     @relation("ReceivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+  status     String   @default("PENDING") // "PENDING" | "ACCEPTED" | "REJECTED"
+  createdAt  DateTime @default(now())
+
+  @@unique([senderId, receiverId])
+  @@index([receiverId])
+}
+
+model Friend {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
+  friendId  String
+  friend    User     @relation("FriendUsers", fields: [friendId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, friendId])
+  @@index([userId])
+}
+
+model StudyGroup {
+  id                     String           @id @default(uuid())
+  name                   String
+  description            String?
+  inviteCode             String           @unique
+  isPrivate              Boolean          @default(false)
+  createdById            String
+  creator                User             @relation("CreatedGroups", fields: [createdById], references: [id], onDelete: Restrict)
+  totalGroupFocusMinutes Int              @default(0)
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+
+  members                GroupMember[]
+  groupChallenges        GroupChallenge[]
+  groupSessions          GroupSession[]
+
+  @@index([inviteCode])
+}
+
+model GroupMember {
+  id        String     @id @default(uuid())
+  groupId   String
+  group     StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      GroupRole  @default(MEMBER)
+  joinedAt  DateTime   @default(now())
+
+  @@unique([groupId, userId])
+  @@index([userId])
+}
+
+model GroupChallenge {
+  id          String     @id @default(uuid())
+  groupId     String
+  group       StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  title       String
+  targetHours Int
+  progress    Int        @default(0)
+  isCompleted Boolean    @default(false)
+  endDate     DateTime
+  createdAt   DateTime   @default(now())
+
+  @@index([groupId])
+}
+
+model GroupSession {
+  id          String     @id @default(uuid())
+  groupId     String
+  group       StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  scheduledAt DateTime
+  durationMin Int        @default(60)
+  topic       String
+  isCompleted Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+
+  @@index([groupId])
+}
+
+// ==========================================
+// 8. NOTIFICATIONS & PREFERENCES
+// ==========================================
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   @default("SYSTEM") // "XP" | "STREAK" | "CHALLENGE" | "FRIEND" | "SYSTEM"
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+}
+
+model NotificationPreference {
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quietHoursStart       String?  // "22:00"
+  quietHoursEnd         String?  // "07:00"
+  streakAlerts          Boolean  @default(true)
+  limitWarnings         Boolean  @default(true)
+  friendActivityAlerts  Boolean  @default(true)
+  aiRecommendationsPush Boolean  @default(true)
+  updatedAt             DateTime @updatedAt
+}
+
+// ==========================================
+// 9. MOBILE ANDROID USAGE
+// ==========================================
+
+model MobileAppUsage {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  packageName     String   // e.g. "com.instagram.android"
+  appName         String   // "Instagram"
+  date            String   // YYYY-MM-DD
+  durationSeconds Int      @default(0)
+  isDistracting   Boolean  @default(true)
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, date, packageName])
+  @@index([userId, date])
+}

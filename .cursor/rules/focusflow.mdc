@@ -1,0 +1,34 @@
+---
+description: Engineering guidelines and architectural standards for FOCUSFLOW
+globs: **/*.{ts,tsx,js,json,prisma}
+---
+
+# FOCUSFLOW — Cursor AI Engineering Rules
+
+## Core Tenets
+- **Project**: FOCUSFLOW (AI Focus Coach & Digital Wellbeing for Students)
+- **Monorepo Structure**:
+  - `apps/web`: React + Vite + TypeScript + Tailwind CSS
+  - `apps/api`: Express + Node.js + TypeScript + Prisma ORM + PostgreSQL
+  - `apps/extension`: Chrome Extension Manifest V3 + TypeScript
+  - `packages/shared-types`: Canonical domain types
+  - `packages/validation`: Zod input schemas
+  - `packages/shared-utils`: Pure utility helpers
+
+## Coding Standards
+1. **TypeScript Only**: `strict: true`, no untyped `any` without explicit justification.
+2. **Separation of Layers**:
+   - `apps/api/src/controllers`: Request/Response orchestration only.
+   - `apps/api/src/services`: Database and external integration logic.
+   - `apps/api/src/routes`: Route definitions and middleware binding.
+   - `apps/api/src/middleware`: Error handling, auth verification, Zod validation.
+3. **Security**:
+   - Validate every endpoint using `@focusflow/validation`.
+   - Never embed secret tokens, API keys, or database URLs in frontend code or git.
+4. **Tracking & Privacy Standards**:
+   - Reel counts are approximations based on observable feed transitions.
+   - Never capture screenshots, keystrokes, messages, or private user details.
+   - Explicit user consent required before active tracking.
+5. **UI & State Handling**:
+   - Gracefully handle Loading, Empty, and Error states.
+   - Distinctly label mock or demonstration data.

@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "FOCUSFLOW - AI Focus Coach & Digital Wellbeing",
+  "version": "1.0.0",
+  "description": "Helps students understand digital habits, track short-form video doomscrolling estimates, block distracting sites, and improve study routines.",
+  "permissions": [
+    "tabs",
+    "windows",
+    "idle",
+    "storage",
+    "alarms",
+    "declarativeNetRequest"
+  ],
+  "host_permissions": [
+    "*://*.instagram.com/*",
+    "*://*.youtube.com/*",
+    "*://*.facebook.com/*"
+  ],
+  "background": {
+    "service_worker": "dist/background/service-worker.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "FOCUSFLOW Focus Dashboard"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.instagram.com/*"],
+      "js": ["dist/content/instagram.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["*://*.youtube.com/*"],
+      "js": ["dist/content/youtube.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["*://*.facebook.com/*"],
+      "js": ["dist/content/facebook.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

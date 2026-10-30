@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@focusflow/shared-types": ["../../packages/shared-types/src/index.ts"],
+      "@focusflow/validation": ["../../packages/validation/src/index.ts"],
+      "@focusflow/shared-utils": ["../../packages/shared-utils/src/index.ts"]
+    }
+  },
+  "include": ["src"]
+}

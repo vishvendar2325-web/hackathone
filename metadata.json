@@ -1,0 +1,6 @@
+{
+  "name": "Brainrot",
+  "description": "Watch your brain rot, one reel at a time. Counts Instagram Reels, renders 7 rotting stages, simulates floating overlay, home widget, and Today stats.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

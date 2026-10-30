@@ -1,0 +1,170 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-drip: "Rubik Wet Paint", "Bricolage Grotesque", cursive;
+
+  --color-rot-bg: #0c0a10;
+  --color-rot-bg2: #120f18;
+  --color-rot-card: #17131f;
+  --color-rot-card2: #1f1a29;
+  --color-rot-card-raised: #242423;
+  --color-rot-line: #2c2537;
+  --color-rot-ink: #f5f1e8;
+  --color-rot-ink2: #c9c4d3;
+  --color-rot-muted: #8f89a0;
+  --color-rot-slime: #b8ff3c;
+  --color-rot-slime-deep: #7fcf00;
+  --color-rot-pink: #ff4fd8;
+  --color-rot-cyan: #49e6ff;
+  --color-rot-accent: #f4533f;
+  --color-rot-good: #4cc27e;
+}
+
+:root {
+  --display: "Bricolage Grotesque", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+  --drip: "Rubik Wet Paint", "Bricolage Grotesque", cursive;
+}
+
+body {
+  font-family: var(--display);
+  background-color: #0c0a10;
+  color: #f5f1e8;
+  overflow-x: hidden;
+}
+
+/* Background subtle ambient slime glow */
+.bg-drift-grid::before {
+  content: "";
+  position: fixed;
+  inset: -40%;
+  background:
+    radial-gradient(40% 30% at 20% 20%, rgba(184, 255, 60, 0.12), transparent 70%),
+    radial-gradient(35% 30% at 85% 30%, rgba(255, 79, 216, 0.11), transparent 70%),
+    radial-gradient(40% 35% at 60% 90%, rgba(73, 230, 255, 0.08), transparent 70%);
+  animation: bgDrift 28s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes bgDrift {
+  to {
+    transform: translate(5%, -3%) rotate(6deg);
+  }
+}
+
+/* Brain breathing animation */
+@keyframes brainBreathe {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.045) translateY(-1px);
+  }
+}
+
+.animate-breathe {
+  animation: brainBreathe 2.4s ease-in-out infinite;
+}
+
+/* Squish animation on reel swipe */
+@keyframes brainSquish {
+  0% { transform: scale(1, 1); }
+  25% { transform: scale(1.18, 0.82); }
+  55% { transform: scale(0.92, 1.08); }
+  75% { transform: scale(1.05, 0.96); }
+  100% { transform: scale(1, 1); }
+}
+
+.animate-squish {
+  animation: brainSquish 0.45s ease-out;
+}
+
+/* Shake animation on stage upgrade */
+@keyframes brainShake {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  15% { transform: translate(-6px, 2px) rotate(-4deg); }
+  30% { transform: translate(6px, -2px) rotate(4deg); }
+  45% { transform: translate(-4px, -1px) rotate(-2deg); }
+  60% { transform: translate(4px, 1px) rotate(2deg); }
+  75% { transform: translate(-2px, 0px) rotate(-1deg); }
+}
+
+.animate-shake {
+  animation: brainShake 0.55s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+/* Drop falling animation */
+@keyframes dropFall {
+  0% {
+    transform: translateY(0) scale(0.7);
+    opacity: 0.95;
+  }
+  80% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(42px) scale(1.1);
+    opacity: 0;
+  }
+}
+
+.animate-drop-fall {
+  animation: dropFall 0.85s ease-in forwards;
+}
+
+/* Smoke rising animation */
+@keyframes smokeRise {
+  0% {
+    transform: translateY(0) scale(0.8) rotate(0deg);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.7;
+  }
+  70% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(-28px) scale(1.4) rotate(15deg);
+    opacity: 0;
+  }
+}
+
+.animate-smoke {
+  animation: smokeRise 2s ease-out infinite;
+}
+
+/* Shockwave expansion */
+@keyframes shockwave {
+  0% {
+    transform: scale(0.4);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+.animate-shockwave {
+  animation: shockwave 0.6s ease-out forwards;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0c0a10;
+}
+::-webkit-scrollbar-thumb {
+  background: #2c2537;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #b8ff3c;
+}

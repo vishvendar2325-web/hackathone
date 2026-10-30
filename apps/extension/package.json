@@ -1,0 +1,13 @@
+{
+  "name": "@focusflow/extension",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.308",
+    "typescript": "^5.8.0"
+  }
+}

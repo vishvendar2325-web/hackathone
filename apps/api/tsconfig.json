@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "paths": {
+      "@focusflow/shared-types": ["../../packages/shared-types/src/index.ts"],
+      "@focusflow/validation": ["../../packages/validation/src/index.ts"],
+      "@focusflow/shared-utils": ["../../packages/shared-utils/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*"]
+}
